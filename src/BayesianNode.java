@@ -21,4 +21,8 @@ public class BayesianNode {
     public void addChild(String child){
         this.children.add(child);
     }
+    public  String getName(){
+        return this.name;
+    }
+
 }

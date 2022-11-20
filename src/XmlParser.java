@@ -1,9 +1,7 @@
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -125,21 +123,31 @@ public class XmlParser {
             curr = "";
             for (int p = 0; p < flipOutCome.size(); p++) {
                 if (j % flipOutCome.get(p) == 0 && j > 0) {
+
                     currentOutCome.set(p, (currentOutCome.get(p) + 1) %
                             netWorkNodes.get(currTableNodeNames.get(p)).outComes.size());
                 }
             }
             for (int k = 0; k < currTableNodeNames.size(); k++) {
-                curr += currTableNodeNames.get(k) + "=";
-                curr += netWorkNodes.get(currTableNodeNames.get(k)).outComes.get(currentOutCome.get(k));
-                if (k < currTableNodeNames.size() - 1) {
-                    curr += " ";
+                if (k==0){
+                    curr+= "P("+currTableNodeNames.get(k)+"="+
+                            netWorkNodes.get(currTableNodeNames.get(k)).outComes.get(currentOutCome.get(k));
+                    if ( netWorkNodes.get(currTableNodeNames.get(k)).parents.size()>0) curr+="|";
+                }else{
+                    curr += currTableNodeNames.get(k)+"="+
+                            netWorkNodes.get(currTableNodeNames.get(k)).outComes.get(currentOutCome.get(k));
+                }
+
+                if (k < currTableNodeNames.size() - 1 &&k!=0) {
+                    curr += ",";
                 }
             }
+            curr+=")";
             netWorkNodes.get(currElement.getElementsByTagName("FOR").item(0).getTextContent())
                     .cpt.put(curr, Double.valueOf(probAsList.get(j)));
         }
     }
 }
+
 
 
