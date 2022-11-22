@@ -11,7 +11,7 @@ import org.w3c.dom.NodeList;
 public class XmlParser {
 
     /**
-    this class will build all our network Nodes with all their fields and connections.
+     this class will build all our network Nodes with all their fields and connections.
      **/
     /**
      *
@@ -81,7 +81,7 @@ public class XmlParser {
                 currTableNodeNames.add(currElement.getElementsByTagName("FOR").item(0).getTextContent());
                 //this for loop add the children and parents for the node
                 //by keeping the nodes in hashmap it made it easier to search them
-                for (int j = 0; j < currElement.getElementsByTagName("GIVEN").getLength(); j++) {
+                for (int j = currElement.getElementsByTagName("GIVEN").getLength()-1; j >=0; j--) {
                     netWorkNodes.get(currElement.getElementsByTagName("FOR").item(0).getTextContent()).
                             addParent(currElement.getElementsByTagName("GIVEN").item(j).getTextContent());
                     netWorkNodes.get(currElement.getElementsByTagName("GIVEN").item(j).getTextContent()).
@@ -148,6 +148,4 @@ public class XmlParser {
         }
     }
 }
-
-
 

@@ -18,14 +18,27 @@ public class readInputFromTxt {
             int indexOfQueryVar;
             int indexOfEndQueryVar;
             int indexEndOfQuery;
+            String outComequeryVar;
+            String withCodeToRun;
+            String queryVar;
             while (sc.hasNextLine()) {
                 String line = sc.nextLine();
                 String query = line.substring(0, line.length() - 2);
+                if (!query.contains("|")){
+                    indexOfQueryVar = line.indexOf('=');
+                    indexEndOfQuery = line.indexOf(')');
+                    queryVar = line.substring(2, indexOfQueryVar);
+                    outComequeryVar = line.substring(indexOfQueryVar+1,indexEndOfQuery);
+                    System.out.println(queryVar);
+                    evidence.add(queryVar+"="+outComequeryVar);
+                    System.out.println(evidence);
+                    set.add(queryVar);
+                }else{
                 indexOfQueryVar = line.indexOf('=');
                 indexOfEndQueryVar = line.indexOf('|');
                 indexEndOfQuery = line.indexOf(')');
-                String queryVar = line.substring(2, indexOfQueryVar);
-                String outComequeryVar = line.substring(indexOfQueryVar+1,indexOfEndQueryVar);
+                queryVar = line.substring(2, indexOfQueryVar);
+                outComequeryVar = line.substring(indexOfQueryVar+1,indexOfEndQueryVar);
                 evidence.add(queryVar+"="+outComequeryVar);
                 set.add(queryVar);
                 ArrayList<String> restOfQuery = new ArrayList<>(Arrays.asList(line.substring(indexOfEndQueryVar + 1, indexEndOfQuery).split(",")));
@@ -33,11 +46,12 @@ public class readInputFromTxt {
                 int endIndex;
                 for (int i = 0; i < restOfQuery.size(); i++) {
                     indexVar = restOfQuery.get(i).indexOf('=');
-                    endIndex =  restOfQuery.get(i).length();
-                    evidence.add(restOfQuery.get(i).substring(0, indexVar)+
+                    endIndex = restOfQuery.get(i).length();
+                    evidence.add(restOfQuery.get(i).substring(0, indexVar) +
                             restOfQuery.get(i).substring(indexVar, endIndex));
                     set.add(restOfQuery.get(i).substring(0, indexVar));
                 }
+               }
                 for (Map.Entry<String, BayesianNode> set1 :
                         network.networkNodes.entrySet()) {
                     if(!set.contains(set1.getKey())){
@@ -45,8 +59,8 @@ public class readInputFromTxt {
                     }
                 }
 
-
-               String ansi =  network.naiveAnsweringQuery(evidence,hidden,queryVar,outComequeryVar);
+                withCodeToRun = line.substring(line.length()-1);
+               String ansi =  network.AnsweringQuery(evidence,hidden,queryVar,outComequeryVar,withCodeToRun,query);
 
                 System.out.println(ansi);
 
