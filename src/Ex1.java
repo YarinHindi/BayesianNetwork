@@ -11,6 +11,7 @@ public class Ex1 {
         writer.close();
     } catch (IOException e) {
         e.printStackTrace();
+
     }
 
 
