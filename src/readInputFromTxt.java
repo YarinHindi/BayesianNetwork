@@ -60,9 +60,8 @@ public class readInputFromTxt {
                 }
 
                 withCodeToRun = line.substring(line.length()-1);
-               String ansi =  network.AnsweringQuery(evidence,hidden,queryVar,outComequeryVar,withCodeToRun,query);
+                ans +=  network.AnsweringQuery(evidence,hidden,queryVar,outComequeryVar,withCodeToRun,query)+"\n";
 
-                System.out.println(ansi);
 
                 hidden.clear();
                 evidence.clear();
@@ -76,8 +75,4 @@ public class readInputFromTxt {
         }
     }
 
-    public static void main(String[] args) {
-       readInputAndReturnAns("input.txt");
-
-    }
 }
