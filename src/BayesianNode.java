@@ -2,11 +2,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class BayesianNode {
-    public   String name;
     public ArrayList<String> outComes;
     public ArrayList<String> parents;
     public ArrayList<String> children;
     public HashMap<String,Double> cpt;
+    private String name;
     public BayesianNode(String name, ArrayList<String> outComes){
         this.name = name;
         this.cpt = new HashMap<>();

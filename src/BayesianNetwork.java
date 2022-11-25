@@ -4,33 +4,28 @@ import java.util.*;
 public class BayesianNetwork {
 
     public HashMap<String, BayesianNode> networkNodes;
-    public static double numerator = 0;
-    public static double denominator = 0;
-    public static int numberOfAddOp = 0;
-    public static int numberOfMulOp = 0;
+    public double numerator = 0;
+    public double denominator = 0;
+    public int numberOfAddOp = 0;
+    public int numberOfMulOp = 0;
 
     public BayesianNetwork() {
         this.networkNodes = new HashMap<>();
-        this.numberOfAddOp = 0;
-        this.numberOfMulOp = 0;
     }
 
     public void updateNetFromXml(String XmlFile) {
         XmlParser.fileToNetwork(XmlFile, this.networkNodes);
     }
 
-    public BayesianNode returnNodebyName(String name) {
-        return networkNodes.get(name);
-    }
 
-    public static void resetAns() {
+    public void resetAns() {
         numerator = 0;
         denominator = 0;
         numberOfAddOp = 0;
         numberOfMulOp = 0;
     }
 
-    public ArrayList<ArrayList<String>> returnEvidenceWithoutoutCome(ArrayList<String> evidence) {
+    public ArrayList<ArrayList<String>> returnEvidenceWithoutCome(ArrayList<String> evidence) {
         ArrayList<ArrayList<String>> evidencewithoutCome = new ArrayList<>();
         ArrayList<String> temp = new ArrayList<>();
         for (int i = 0; i < evidence.size(); i++) {
@@ -79,8 +74,7 @@ public class BayesianNetwork {
         String ans = "";
         double beforeAns;
         //list of list with evidence with their outcomes example ==> [[A,T] [B,F] [C,v1]]
-        ArrayList<ArrayList<String>> evidenceWithoutComes = returnEvidenceWithoutoutCome(evidence);
-
+        ArrayList<ArrayList<String>> evidenceWithoutComes = returnEvidenceWithoutCome(evidence);
         beforeAns = checkIfAnsInCpt(query, evidence, queryVar, outComequeryVar);
         if (beforeAns != -1) {
             return (String.format("%.5f", beforeAns)) + "," + numberOfAddOp + "," + numberOfMulOp;
@@ -95,20 +89,15 @@ public class BayesianNetwork {
                 ArrayList<Boolean> taken2 = new ArrayList<>(Arrays.asList(new Boolean[hidden.size()]));
                 Collections.fill(taken2, Boolean.FALSE);
                 AllCombinationToCompute(evidence, hidden, taken2, 0, queryVar, outComequeryVar, true);
-                if (numberOfAddOp > 0) {
-                    numberOfAddOp--;
-//                    numberOfAddOp+=networkNodes.get(queryVar).outComes.size()-1;
-//                    numberOfAddOp-= networkNodes.get(queryVar).outComes.size();
-
-                }
+                numberOfAddOp--;
                 ans = (String.format("%.5f", numerator / (denominator + numerator))) + "," + numberOfAddOp + "," + numberOfMulOp;
                 break;
             case "2":
-                double preAns = variableElimination(evidenceWithoutComes, hidden, queryVar, query,outComequeryVar,true);
+                double preAns = variableElimination(evidenceWithoutComes, hidden, queryVar, query, outComequeryVar, true);
                 ans = (String.format("%.5f", preAns)) + "," + numberOfAddOp + "," + numberOfMulOp;
                 break;
             case "3":
-                double preAns2 = variableElimination(evidenceWithoutComes, hidden, queryVar, query,outComequeryVar,false);
+                double preAns2 = variableElimination(evidenceWithoutComes, hidden, queryVar, query, outComequeryVar, false);
                 ans = (String.format("%.5f", preAns2)) + "," + numberOfAddOp + "," + numberOfMulOp;
                 break;
         }
@@ -149,8 +138,8 @@ public class BayesianNetwork {
     }
 
 
-    public ArrayList<HashMap<String,Double>> getAllFactorsContainHidden(ArrayList<HashMap<String,Double>> factors,String hidden){
-        ArrayList<HashMap<String,Double>> factContainHidden = new ArrayList<>();
+    public ArrayList<HashMap<String, Double>> getAllFactorsContainHidden(ArrayList<HashMap<String, Double>> factors, String hidden) {
+        ArrayList<HashMap<String, Double>> factContainHidden = new ArrayList<>();
         for (int i = 0; i < factors.size(); i++) {
             ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
             String key = check.get(0);
@@ -160,16 +149,18 @@ public class BayesianNetwork {
         }
         return factContainHidden;
     }
-    public int HeuristicsOrder(ArrayList<String> hidden,ArrayList<HashMap<String,Double>> factors,ArrayList<String> alreadyEliminated){
+
+    public int HeuristicsOrder(ArrayList<String> hidden, ArrayList<HashMap<String, Double>> factors, ArrayList<String> alreadyEliminated) {
         int ans = -1;
         int min = Integer.MAX_VALUE;
-        int currntableSize ;
+        int currntableSize;
         ArrayList<String> varsInTable = new ArrayList<>();
         for (int i = 0; i < hidden.size(); i++) {
-            if(alreadyEliminated.contains(hidden.get(i)))continue;;
-            ArrayList<HashMap<String,Double>> hiddenInvolve = getAllFactorsContainHidden(factors,hidden.get(i));
-            if(hiddenInvolve.size()==1){
-                if(hiddenInvolve.get(0).keySet().size()<min){
+            if (alreadyEliminated.contains(hidden.get(i))) continue;
+            ;
+            ArrayList<HashMap<String, Double>> hiddenInvolve = getAllFactorsContainHidden(factors, hidden.get(i));
+            if (hiddenInvolve.size() == 1) {
+                if (hiddenInvolve.get(0).keySet().size() < min) {
                     min = hiddenInvolve.get(0).keySet().size();
                     ans = i;
                 }
@@ -177,23 +168,23 @@ public class BayesianNetwork {
             }
             currntableSize = 0;
             varsInTable.clear();
-            for (int j = 0; j <hiddenInvolve.size()-1 ; j++) {
-                if(j==0){
+            for (int j = 0; j < hiddenInvolve.size() - 1; j++) {
+                if (j == 0) {
                     currntableSize = hiddenInvolve.get(0).size();
                     ArrayList<String> temp = new ArrayList<>(hiddenInvolve.get(j).keySet());
                     varsInTable = getNodesNameWithOutOutCome(temp.get(j));
                 }
-                ArrayList<String> before = new ArrayList<>(hiddenInvolve.get(j+1).keySet());
-                ArrayList<String> CommonVars =  getCommonVarsbykey(varsInTable,before.get(0));
+                ArrayList<String> before = new ArrayList<>(hiddenInvolve.get(j + 1).keySet());
+                ArrayList<String> CommonVars = getCommonVarsbykey(varsInTable, before.get(0));
                 int counter = 1;
                 for (int k = 0; k < CommonVars.size(); k++) {
-                    counter*=networkNodes.get(CommonVars.get(k)).outComes.size();
+                    counter *= networkNodes.get(CommonVars.get(k)).outComes.size();
                 }
                 int sizeOfCommonVars = CommonVars.size();
-                int sizeSecondTable = hiddenInvolve.get(j+1).size();
-                currntableSize = currntableSize*sizeSecondTable/counter;
+                int sizeSecondTable = hiddenInvolve.get(j + 1).size();
+                currntableSize = currntableSize * sizeSecondTable / counter;
             }
-            if(currntableSize<min){
+            if (currntableSize < min) {
                 min = currntableSize;
                 ans = i;
             }
@@ -245,12 +236,10 @@ public class BayesianNetwork {
         for (int i = 0; i < var.parents.size(); i++) {
             set.add(var.parents.get(i));
             getAncestors(networkNodes.get(var.parents.get(i)), set);
-
         }
-
     }
 
-    public double variableElimination(ArrayList<ArrayList<String>> evidence, ArrayList<String> hidden, String queryVar, String query,String queryOutcomeVar,Boolean flag) {
+    public double variableElimination(ArrayList<ArrayList<String>> evidence, ArrayList<String> hidden, String queryVar, String query, String queryOutcomeVar, Boolean flag) {
         //drop all node that  not ancestor of evidence and query var.
         HashSet<String> relevantNode = dropAllVarsNotAncestor(evidence, queryVar);
         //init the factors
@@ -263,7 +252,7 @@ public class BayesianNetwork {
         ArrayList<String> namesWithOutComes = nodeNamesFromRowOfCpt(query);
         for (int i = hidden.size() - 1; i >= 0; i--) {
             if (!relevantNode.contains(hidden.get(i))) {
-            //remove all cpt that contain nodes are not ancestors of evidence and queryVar.
+                //remove all cpt that contain nodes are not ancestors of evidence and queryVar.
                 for (int j = factors.size() - 1; j >= 0; j--) {
                     ArrayList<String> vals = new ArrayList<>(factors.get(j).keySet());
                     String firstItem = vals.get(0);
@@ -276,111 +265,94 @@ public class BayesianNetwork {
         }
         if (flag) Collections.sort(hidden);
         ArrayList<String> eliminated = new ArrayList<>();
+        int index;
         for (int i = 0; i < hidden.size(); i++) {
-            if(!flag){
-                i = HeuristicsOrder(hidden,factors,eliminated);
+            if (!flag) {
+                i = HeuristicsOrder(hidden, factors, eliminated);
             }
-            int numberOfFactorContain = NumFactorsContain(factors, hidden.get(i));
-            int index = factorIndexForHidden(factors,hidden.get(i));
-            while (numberOfFactorContain>1){
-                int [] smallest = findIndexOfSmallestFactors(factors,hidden.get(i));
-                HashMap<String, Double> factor1 = new HashMap<>();
-                factor1.putAll(factors.get(smallest[0]));
-                HashMap<String, Double> factor2 = new HashMap<>();
-                factor2.putAll(factors.get(smallest[1]));
-                if (smallest[0] < smallest[1]) {
-                    factors.remove(smallest[1]);
-                    factors.remove(smallest[0]);
-                }
-                else {
-                    factors.remove(smallest[0]);
-                    factors.remove(smallest[1]);
-                }
-                factors.add(join(factor1, factor2));
-                index = factors.size()-1;
-                numberOfFactorContain = NumFactorsContain(factors, hidden.get(i));
-            }
+            index = joinAll(factors, hidden.get(i));
             HashMap<String, Double> cpt = new HashMap<>();
             cpt.putAll(eliminate(factors.get(index), hidden.get(i)));
-            if (!flag){
+            if (!flag) {
                 eliminated.add(hidden.get(i));
-                if(eliminated.size()!=hidden.size() &&i==hidden.size()-1)i--;
-                if(eliminated.size()==hidden.size())i =hidden.size();
+                if (eliminated.size() != hidden.size() && i == hidden.size() - 1) i--;
+                if (eliminated.size() == hidden.size()) i = hidden.size();
             }
-
             factors.set(index, cpt);
             deleteEmptyFactor(factors);
         }
-        // checking if we have multiple cpt's that contains the query variable
-        int index = factorIndexForHidden(factors, queryVar);
-        int numberOfFactorContain = NumFactorsContain(factors, queryVar);
-        // while numbers of the cpt's that contains the query
-        // is greater than 1, then we will keep doing join
-        while (numberOfFactorContain > 1) {
-            int [] check = findIndexOfSmallestFactors(factors, queryVar);
-            HashMap<String, Double> factor1 = new HashMap<>();
-            factor1.putAll(factors.get(check[0]));
-            HashMap<String, Double> factor2 = new HashMap<>();
-            factor2.putAll(factors.get(check[1]));
-            if (check[0] < check[1]) {
-                factors.remove(check[1]);
-                factors.remove(check[0]);
-            }
-            else {
-                factors.remove(check[0]);
-                factors.remove(check[1]);
-            }
-            factors.add(join(factor1, factor2));
-            index = factors.size()-1;
-            numberOfFactorContain = factorIndexForHidden(factors, queryVar);
-        }
+        index = joinAll(factors, queryVar);
         HashMap<String, Double> final_factor = normalize(factors.get(index));
-        //  keys of this factor
         ArrayList<String> keys = new ArrayList<>(final_factor.keySet());
-        // getting the query with it's outcome
-        String queryVarWithOutCome = queryVar+"="+queryOutcomeVar;
-        // checking in the factor the specific case that we want
-        double final_prob = check_prob(queryVarWithOutCome, keys, final_factor);
+        String queryVarWithOutCome = queryVar + "=" + queryOutcomeVar;
+        double final_prob = findAnswerAfterNormalize(queryVarWithOutCome, keys, final_factor);
         return final_prob;
+    }
+
+    public int joinAll(ArrayList<HashMap<String, Double>> factors, String var) {
+        int numberOfFactorContain = NumFactorsContain(factors, var);
+        int index = factorIndexForHidden(factors, var);
+        while (numberOfFactorContain > 1) {
+            int[] smallest = findIndexOfSmallestFactors(factors, var);
+            int ind1 = smallest[0];
+            int ind2 = smallest[1];
+            HashMap<String, Double> firstFactor = new HashMap<>();
+            firstFactor.putAll(factors.get(ind1));
+            HashMap<String, Double> secondFactor = new HashMap<>();
+            secondFactor.putAll(factors.get(ind2));
+            if (ind1 < ind2) {
+                int temp = ind1;
+                ind1 = ind2;
+                ind2 = temp;
+            }
+            factors.remove(ind1);
+            factors.remove(ind2);
+            factors.add(join(firstFactor, secondFactor));
+            index = factors.size() - 1;
+            numberOfFactorContain = NumFactorsContain(factors, var);
+        }
+        return index;
 
     }
-    public HashMap<String, Double> eliminate(HashMap<String, Double> factor, String hidden){
+
+    public HashMap<String, Double> eliminate(HashMap<String, Double> factor, String hidden) {
         ArrayList<String> keys = new ArrayList<>(factor.keySet());
         HashMap<String, Double> newFactor = new HashMap<>();
         double value = 0;
         Boolean inside = false;
         for (int i = 0; i < keys.size(); i++) {
             String keyWithHidden = keys.get(i);
-            String keyWithOutHidden = removeHidden(keyWithHidden,hidden);
+            String keyWithOutHidden = removeHidden(keyWithHidden, hidden);
             value = factor.get(keys.get(i));
             inside = false;
-            if (keyWithOutHidden.length()==3) return newFactor;
-            for (int j = i+1; j < keys.size(); j++) {
+            if (keyWithOutHidden.length() == 3) return newFactor;
+            for (int j = i + 1; j < keys.size(); j++) {
                 String keyWithHiddenCheck = keys.get(j);
-                String keyWithOutHiddenCheck = removeHidden(keyWithHiddenCheck,hidden);
-                if(keyWithOutHidden.equals(keyWithOutHiddenCheck)){
-                    value+=factor.get(keys.get(j));
+                String keyWithOutHiddenCheck = removeHidden(keyWithHiddenCheck, hidden);
+                if (keyWithOutHidden.equals(keyWithOutHiddenCheck)) {
+                    value += factor.get(keys.get(j));
                     numberOfAddOp++;
                     inside = true;
                 }
             }
-            if (inside) newFactor.put(keyWithOutHidden,value);
+            if (inside) newFactor.put(keyWithOutHidden, value);
         }
         return newFactor;
 
     }
-    public double check_prob(String query, ArrayList<String> keys, HashMap<String, Double> factor) {
-        double prob = 0;
+
+    public double findAnswerAfterNormalize(String queryVarWithOutCome, ArrayList<String> keys, HashMap<String, Double> factor) {
+        double finalAnswer = 0;
         for (String key : keys) {
-            if (key.contains(query)) {
-                prob = factor.get(key);
+            if (key.contains(queryVarWithOutCome)) {
+                finalAnswer = factor.get(key);
                 break;
             }
         }
-
-        return prob;
+        return finalAnswer;
     }
-    public String removeHidden(String key , String hidden) {
+
+    public String removeHidden(String key, String hidden) {
         String ans = "P(";
         ArrayList<String> newKey = nodeNamesFromRowOfCpt(key);
         boolean first = true;
@@ -389,172 +361,79 @@ public class BayesianNetwork {
             if (first) {
                 first = false;
                 int ind = newKey.get(i).indexOf("=");
-                ans += newKey.get(i).substring(0, ind) +"="+ newKey.get(i).substring(ind + 1, newKey.get(i).length());
+                ans += newKey.get(i).substring(0, ind) + "=" + newKey.get(i).substring(ind + 1, newKey.get(i).length());
             } else {
                 int ind = newKey.get(i).indexOf("=");
-                ans += "," + newKey.get(i).substring(0, ind) +"="+ newKey.get(i).substring(ind + 1, newKey.get(i).length());
+                ans += "," + newKey.get(i).substring(0, ind) + "=" + newKey.get(i).substring(ind + 1, newKey.get(i).length());
             }
-
         }
-        ans+=")";
+        ans += ")";
         return ans;
     }
 
-    public int[] findIndexOfSmallestFactors(ArrayList<HashMap<String,Double>> factors,String hidden) {
+
+
+    public int findOneSmalletFactor(ArrayList<HashMap<String, Double>> factors, String hidden,int taken){
+        int min = Integer.MAX_VALUE;
+        int min_index = -1;
+        for (int i = 0; i < factors.size(); i++) {
+            ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
+            String key = check.get(0);
+            if (key.contains(hidden)) {
+                if (factors.get(i).size() < min && i!=taken) {
+                    min = factors.get(i).size();
+                    min_index = i;
+                }
+            }
+        }
+        return min_index;
+    }
+
+
+    public int[] findIndexOfSmallestFactors(ArrayList<HashMap<String, Double>> factors, String hidden) {
         int[] ans = new int[2];
         HashMap<String, Double> min_cpt_1 = new HashMap<>();
-        int min = Integer.MAX_VALUE;
-        int min_index1 = 0;
-        int firstSize = 0;
-        int secondSize = 0;
-        for (int i = 0; i < factors.size(); i++) {
-            ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
-            String key = check.get(0);
-            if (key.contains(hidden)) {
-                if (factors.get(i).size() < min) {
-                    min = factors.get(i).size();
-                    min_index1 = i;
-                    firstSize = min;
-                }
-            }
-        }
-        min_cpt_1.putAll(factors.get(min_index1));
+        int min_index1 = findOneSmalletFactor(factors,hidden,-1);
+
         HashMap<String, Double> min_cpt_2 = new HashMap<>();
-        min = Integer.MAX_VALUE;
-        int min_index2 = 100;
-        for (int i = 0; i < factors.size(); i++) {
-            ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
-            String key = check.get(0);
-            // checking the second min size
-            if (key.contains(hidden)) {
-                if (factors.get(i).size() < min&& i!=min_index1) {
-                    min = factors.get(i).size();
-                    min_index2 = i;
-                    secondSize = min;
-                }
-            }
-        }
-        min_cpt_2.putAll(factors.get(min_index2));
-        if (min_cpt_1.size() < min_cpt_2.size()) {
+        int min_index2 = findOneSmalletFactor(factors,hidden,min_index1);
+
+        int firstMinSize = factors.get(min_index1).size();
+        int secondMinSize = factors.get(min_index2).size();
+        if(firstMinSize<secondMinSize){
             ans[0] = min_index1;
-            ArrayList<HashMap<String, Double>> temps = new ArrayList<>();
-            for (int i = 0; i < factors.size(); i++) {
-                ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
-                ArrayList<String> names = nodeNamesFromRowOfCpt(check.get(0));
-                // checking if there's more factors with the second min size
-                for (int j = 0; j < names.size(); j++) {
-                    if (names.get(j).substring(0,names.get(j).indexOf("=")).equals(hidden)) {
-                        if (i != ans[0]) {
-                            if (factors.get(i).size() == min) {
-                                temps.add(factors.get(i));
-                            }
-                        }
-                    }
-                }
-            }
-            // if there's only one factor with the second min size we can add it'sindex for sure
-            if (temps.size() == 1) {
-                ans[1] = min_index2;
-            }
-            else {
-                // if there's more than one factor with this size,
-                // we will check the it's min value by ascii
-                HashMap<String, Double> min_hash = ascii_check(temps);
-                for (int i = 0; i < factors.size(); i++) {
-                    if (min_hash.equals(factors.get(i))) {
-                        ans[1] = i;
-                    }
-                }
-            }
+            ans[1] = minAscii(factors,secondMinSize,hidden,-1);
+        }else{
+            ans[0] =  minAscii(factors,firstMinSize,hidden,-1);
+            ans[1] = minAscii(factors,firstMinSize,hidden,ans[0]);
         }
-        else {
-            // if first min size equals to second min size
-            ArrayList<HashMap<String, Double>> temps = new ArrayList<>();
-            for (int i = 0; i < factors.size(); i++) {
-                ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
-                ArrayList<String> names = nodeNamesFromRowOfCpt(check.get(0));
-                // checking if there's more factors with their min size
-                for (int j = 0; j < names.size(); j++) {
-                    if (names.get(j).substring(0,names.get(j).indexOf("=")).equals(hidden)) {
-                        if (factors.get(i).size() == min) {
-                            temps.add(factors.get(i));
-                        }
-                    }
-                }
-            }
-            // if we have only 2 factors with this size (first min and second min)
-            // their indexes will be out answer
-            if (temps.size() == 2) {
-                ans[0] = min_index1;
-                ans[1] = min_index2;
-            }
-            else {
-                // if there's more than one factor with this size,
-                // we will check the it's min value by ascii
-                HashMap<String, Double> min_hash = ascii_check(temps);
-                for (int i = 0; i < factors.size(); i++) {
-                    if (min_hash.equals(factors.get(i))) {
-                        ans[0] = i;
-                    }
-                }
-                ArrayList<HashMap<String, Double>> temps1 = new ArrayList<>();
-                for (int i = 0; i < factors.size(); i++) {
-                    ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
-                    ArrayList<String> names = nodeNamesFromRowOfCpt(check.get(0));
-                    // check if there are more factors with the same size
-                    for (int j = 0; j < names.size(); j++) {
-                        if (names.get(j).substring(0,names.get(j).indexOf("=")).equals(hidden)) {
-                            if (i != ans[0]) {
-                                if (factors.get(i).size() == min) {
-                                    temps1.add(factors.get(i));
-                                }
-                            }
-                        }
-                    }
-                }
-                // returns the index of the minimun by ascii
-                HashMap<String, Double> min_hash1 = ascii_check(temps1);
-                for (int i = 0; i < factors.size(); i++) {
-                    if (min_hash1.equals(factors.get(i))) {
-                        ans[1] = i;
-                    }
-                }
-            }
-        }
-        return ans;
+    return ans;
     }
 
-
-
-    public HashMap<String, Double> ascii_check(ArrayList<HashMap<String, Double>> temps) {
+    public int minAscii(ArrayList<HashMap<String, Double>> factors,int size,String hidden,int taken) {
         int min = Integer.MAX_VALUE;
-        int index = 0;
-        for (int i = 0; i < temps.size(); i++) {
-            ArrayList<String> check = new ArrayList<>(temps.get(i).keySet());
+        int ans = 0;
+        for (int i = 0; i < factors.size(); i++) {
+            ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
             String key = check.get(0);
-            // getting the names of the nodes that are in the key
             ArrayList<String> variables = nodeNamesFromRowOfCpt(key);
             int sum = 0;
-            // computing their ascii sum
+            if(!(key.contains(hidden))||check.size()!=size || i==taken)continue;
             for (int j = 0; j < variables.size(); j++) {
                 int ind = variables.get(j).indexOf("=");
-                String var = variables.get(j).substring(0,ind);
-                if (var.length() == 1) {
-                    sum += variables.get(j).charAt(0);
-                }
-                else {
-                    for (int k = 0; k < var.length(); k++) {
-                        sum += variables.get(j).charAt(k);
-                    }
+                String var = variables.get(j).substring(0, ind);
+                for (int k = 0; k < var.length(); k++) {
+                    sum += variables.get(j).charAt(k);
                 }
             }
             if (sum < min) {
                 min = sum;
-                index = i;
+                ans = i;
             }
         }
-        return temps.get(index);
+        return ans;
     }
+
     public ArrayList<String> getCommonVars(HashMap<String, Double> first, HashMap<String, Double> second) {
         ArrayList<String> commonVar = new ArrayList<>();
         ArrayList<String> preCommonVarsFirst = new ArrayList<>(first.keySet());
@@ -569,11 +448,12 @@ public class BayesianNetwork {
         }
         return commonVar;
     }
-    public  ArrayList<String> getCommonVarsbykey( ArrayList<String> firstKey,String secondKey){
+
+    public ArrayList<String> getCommonVarsbykey(ArrayList<String> firstKey, String secondKey) {
         ArrayList<String> second = getNodesNameWithOutOutCome(secondKey);
         ArrayList<String> ans = new ArrayList<>();
         for (int i = 0; i < firstKey.size(); i++) {
-            if (second.contains(firstKey.get(i)))ans.add(firstKey.get(i));
+            if (second.contains(firstKey.get(i))) ans.add(firstKey.get(i));
         }
         return ans;
     }
@@ -606,24 +486,24 @@ public class BayesianNetwork {
                     numberOfMulOp++;
                     newKey = "P(";
                     for (int k = 0; k < firstOf1.size(); k++) {
-                        if(k< firstOf1.size()-1) {
+                        if (k < firstOf1.size() - 1) {
                             newKey += firstOf1.get(k) + ",";
-                        }else{
+                        } else {
                             newKey += firstOf1.get(k);
                         }
                     }
                     for (int k = 0; k < firstOf2.size(); k++) {
-                        if (k==0)newKey+=",";
+                        if (k == 0) newKey += ",";
                         String var = firstOf2.get(k).substring(0, firstOf2.get(k).indexOf("="));
                         if (commonVar.contains(var)) continue;
-                        if (k <firstOf2.size() - 1) {
-                            newKey += firstOf2.get(k)+",";
+                        if (k < firstOf2.size() - 1) {
+                            newKey += firstOf2.get(k) + ",";
                         } else {
-                            newKey += firstOf2.get(k) ;
+                            newKey += firstOf2.get(k);
                         }
                     }
-                    if (newKey.charAt(newKey.length()-1)==','){
-                        newKey = newKey.substring(0,newKey.length()-1);
+                    if (newKey.charAt(newKey.length() - 1) == ',') {
+                        newKey = newKey.substring(0, newKey.length() - 1);
                     }
 
                     newKey += ")";
@@ -660,51 +540,35 @@ public class BayesianNetwork {
         for (int i = 0; i < NodeNames.size(); i++) {
             factors.add(new HashMap<>(networkNodes.get(NodeNames.get(i)).cpt));
         }
-
         return factors;
     }
 
-
-     public  ArrayList<String> getNodesNameWithOutOutCome(String cptRow){
+    public ArrayList<String> getNodesNameWithOutOutCome(String cptRow) {
         ArrayList<String> beforeAns = nodeNamesFromRowOfCpt(cptRow);
         ArrayList<String> ans = new ArrayList<>();
-         for (int i = 0; i <beforeAns.size() ; i++) {
-             ans.add(beforeAns.get(i).substring(0,beforeAns.get(i).indexOf("=")));
-         }
-         return ans;
-     }
-    // return all vars in query with their outcome in this format --> [[A=T], [B=F]].
-    public ArrayList<String> nodeNamesFromRowOfCpt(String cptRow) {
-        if (cptRow.contains("|")) {
-            int ind = cptRow.indexOf("|");
-            String firstVar = cptRow.substring(2, ind);
-            if (cptRow.length() > ind + 2) {
-                int start = cptRow.indexOf("|") + 1;
-                int end = cptRow.indexOf(")");
-                String subbed = cptRow.substring(start, end);
-                if (subbed.contains(",")) {
-                    ArrayList<String> names = new ArrayList<>(Arrays.asList(subbed.split(",")));
-                    names.add(0, firstVar);
-                    return names;
-                } else {
-                    ArrayList<String> names = new ArrayList<>();
-                    names.add(firstVar);
-                    names.add(subbed);
-                    return names;
-                }
-            } else {
-                ArrayList<String> names = new ArrayList<>();
-                names.add(firstVar);
-                return names;
-            }
-        } else {
-            ArrayList<String> names = new ArrayList<>();
-            String[] toPut = cptRow.substring(2, cptRow.indexOf(")")).split(",");
-            names.addAll(Arrays.asList(toPut));
-            return names;
+        for (int i = 0; i < beforeAns.size(); i++) {
+            ans.add(beforeAns.get(i).substring(0, beforeAns.get(i).indexOf("=")));
         }
+        return ans;
     }
 
+    // return all vars in query with their outcome in this format --> [[A=T], [B=F]].
+    public ArrayList<String> nodeNamesFromRowOfCpt(String cptRow) {
+        ArrayList<String> ans = new ArrayList<>();
+        if(cptRow.contains("|")){
+            int index1 = cptRow.indexOf("=");
+            int index2 = cptRow.indexOf("|");
+            ans.add(cptRow.substring(2,index1)+"="+cptRow.substring(index1+1,index2));
+            if(cptRow.charAt(index2+1)!=')'){
+                String [] splitted = cptRow.substring(index2+1,cptRow.length()-1).split(",");
+                Collections.addAll(ans, splitted);
+            }
+        }else {
+            String[] splitted = cptRow.substring(2, cptRow.indexOf(")")).split(",");
+            Collections.addAll(ans, splitted);
+        }
+        return ans;
+    }
 
     public void deleteEmptyFactor(ArrayList<HashMap<String, Double>> factors) {
         for (int i = factors.size() - 1; i >= 0; i--) {
@@ -729,34 +593,31 @@ public class BayesianNetwork {
         }
 
     }
-    public int factorIndexForHidden(ArrayList<HashMap<String, Double>> factors, String node) {
+
+    public int factorIndexForHidden(ArrayList<HashMap<String, Double>> factors, String hidden) {
         for (int i = 0; i < factors.size(); i++) {
-            ArrayList<String> check = new ArrayList<>(factors.get(i).keySet());
-            String key = check.get(0);
-            if (key.contains(node)) return i;
-            }
-        // if no factor containing that node
+            ArrayList<String> keys = new ArrayList<>(factors.get(i).keySet());
+            String firstKey = keys.get(0);
+            if (firstKey.contains(hidden)) return i;
+        }
         return -1;
     }
-    public HashMap<String, Double> normalize(HashMap<String, Double> factor) {
-        ArrayList<String> keys = new ArrayList<>(factor.keySet());
-        double sum = 0;
-        double prob = 0;
-        for (int i = 0; i < keys.size(); i++) {
-            // adding the number of adding operations
+
+    public HashMap<String, Double> normalize(HashMap<String, Double> lastFactor) {
+        ArrayList<String> keys = new ArrayList<>(lastFactor.keySet());
+        double sumToNormalize = 0;
+        double beforeNormalizeProb;
+        for (String key : keys) {
             numberOfAddOp++;
-            // calculating the su, of all of the probabilities
-            sum += factor.get(keys.get(i));
+            sumToNormalize += lastFactor.get(key);
         }
-        // example: if we have 4 variables we want to sum, then we'll have 3 add operations
         numberOfAddOp--;
-        // removing and adding the updated (normalized) probability
-        for (int i = 0; i < keys.size(); i++) {
-            double prb = factor.get(keys.get(i));
-            factor.remove(keys.get(i));
-            factor.put(keys.get(i), prb/sum);
+        for (String key : keys) {
+            beforeNormalizeProb = lastFactor.get(key);
+            lastFactor.remove(key);
+            lastFactor.put(key, beforeNormalizeProb / sumToNormalize);
         }
-        return factor;
+        return lastFactor;
     }
 }
 
