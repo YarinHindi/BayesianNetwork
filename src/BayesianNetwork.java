@@ -57,7 +57,7 @@ public class BayesianNetwork {
                     if (con1 && con2) return set.getValue();
                 }
             } else {
-                if (set.getKey().contains(queryVar + "=" + outComeQueryVar) && !set.getKey().contains("|"))
+                if (set.getKey().contains(queryVar + "=" + outComeQueryVar) )
                     return set.getValue();
             }
         }
@@ -246,6 +246,8 @@ public class BayesianNetwork {
         ArrayList<HashMap<String, Double>> factors = initFactors();
         //delete the rows that include the evidence we don't need.
         deleteEvidenceFromFactors(factors, evidence);
+
+       cleanFromEvidence(factors,evidence);
         //delete factor taht are size 0
         deleteEmptyFactor(factors);
         // gives us the names of nodes in query with their outcomes
@@ -271,8 +273,7 @@ public class BayesianNetwork {
                 i = HeuristicsOrder(hidden, factors, eliminated);
             }
             index = joinAll(factors, hidden.get(i));
-            HashMap<String, Double> cpt = new HashMap<>();
-            cpt.putAll(eliminate(factors.get(index), hidden.get(i)));
+            HashMap<String, Double> cpt = new HashMap<>(eliminate(factors.get(index), hidden.get(i)));
             if (!flag) {
                 eliminated.add(hidden.get(i));
                 if (eliminated.size() != hidden.size() && i == hidden.size() - 1) i--;
@@ -320,22 +321,27 @@ public class BayesianNetwork {
         HashMap<String, Double> newFactor = new HashMap<>();
         double value = 0;
         Boolean inside = false;
+        ArrayList<Integer> taken = new ArrayList<>();
         for (int i = 0; i < keys.size(); i++) {
+            if(taken.contains(i))continue;
+            taken.add(i);
             String keyWithHidden = keys.get(i);
             String keyWithOutHidden = removeHidden(keyWithHidden, hidden);
             value = factor.get(keys.get(i));
             inside = false;
-            if (keyWithOutHidden.length() == 3) return newFactor;
+            if (keyWithOutHidden.length() == 3)return newFactor;
             for (int j = i + 1; j < keys.size(); j++) {
+                if (taken.contains(j))continue;
                 String keyWithHiddenCheck = keys.get(j);
                 String keyWithOutHiddenCheck = removeHidden(keyWithHiddenCheck, hidden);
                 if (keyWithOutHidden.equals(keyWithOutHiddenCheck)) {
+                    taken.add(j);
                     value += factor.get(keys.get(j));
                     numberOfAddOp++;
                     inside = true;
                 }
             }
-            if (inside) newFactor.put(keyWithOutHidden, value);
+            if (inside)newFactor.put(keyWithOutHidden, value);
         }
         return newFactor;
 
@@ -464,7 +470,7 @@ public class BayesianNetwork {
         ArrayList<String> firstFactorKeys = new ArrayList<>(first.keySet());
         ArrayList<String> secondFactorKeys = new ArrayList<>(second.keySet());
         String newKey = "";
-        Boolean ok = true;
+        Boolean ok = false;
         for (int i = 0; i < firstFactorKeys.size(); i++) {
             double Val1 = first.get(firstFactorKeys.get(i));
             String key1 = firstFactorKeys.get(i);
@@ -483,6 +489,7 @@ public class BayesianNetwork {
                     }
                 }
                 if (ok) {
+
                     numberOfMulOp++;
                     newKey = "P(";
                     for (int k = 0; k < firstOf1.size(); k++) {
@@ -587,7 +594,39 @@ public class BayesianNetwork {
                             factors.get(i).remove(currFactKey);
                             break;
                         }
+
                     }
+                }
+            }
+        }
+
+    }
+    public void cleanFromEvidence(ArrayList<HashMap<String, Double>> factors, ArrayList<ArrayList<String>> evidence) {
+       ArrayList<String> taken = new ArrayList<>();
+        for (int i = 0; i < factors.size(); i++) {
+            ArrayList<String> currFactKeys = new ArrayList<>(factors.get(i).keySet());
+            for (int j = 0; j < currFactKeys.size(); j++) {
+                String currFactKey = currFactKeys.get(j);
+                taken.clear();
+                for (int k = 1; k < evidence.size(); k++) {
+                    if (currFactKey.contains(evidence.get(k).get(0))) {
+                        taken.add(evidence.get(k).get(0));
+                    }
+                }
+                if(taken.size()>0) {
+                    String newKey = "";
+                    double val = 0;
+                    for (int k = 0; k < taken.size(); k++) {
+                        if (k == 0) {
+                            val = factors.get(i).get(currFactKey);
+                            newKey = removeHidden(currFactKey, taken.get(k));
+                        } else {
+                            newKey = removeHidden(newKey, taken.get(k));
+
+                        }
+                    }
+                    factors.get(i).remove(currFactKey);
+                    factors.get(i).put(newKey, val);
                 }
             }
         }

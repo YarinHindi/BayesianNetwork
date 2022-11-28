@@ -4,7 +4,11 @@ import java.util.*;
 
 public class readInputFromTxt {
 
-
+    /**
+     *
+     * @param fileName the Xml file to load our network
+     * @return The answer of the query we asked for in every line.
+     */
     public static String readInputAndReturnAns(String fileName)  {
         String ans = "";
         try {

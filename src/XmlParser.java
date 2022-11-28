@@ -107,7 +107,7 @@ public class XmlParser {
         ArrayList<String> probAsList = new ArrayList<>(Arrays.asList(probAstr.split(" ")));
         String curr = "";
 
-        //currentOutCome keeps the value of a variable cahange his value example : A = T , B2 = v3 ...
+        //currentOutCome keeps the value of a variable change his value example : A = T , B2 = v3 ...
         ArrayList<Integer> currentOutCome = new ArrayList<>();
         //flipOutCome keeps  the value of how often (how many iteration ) a variable should change  his value.
         ArrayList<Integer> flipOutCome = new ArrayList<>();
